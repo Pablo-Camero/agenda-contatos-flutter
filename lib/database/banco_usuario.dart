@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'dart:math';
 
 import 'package:cryptography/cryptography.dart';
-import 'package:sqflite/sqflite.dart';
 
 import 'conexao.dart';
 import '../models/usuario.dart';
@@ -71,79 +70,72 @@ class BancoUsuario {
   }
 
   static Future<bool> cadastrarUsuario(Usuario usuario) async {
-    final db = await Conexao.abrirConexao();
+    final caixa = Conexao.usuarios;
 
+    final nome = usuario.nome.trim();
     final email = usuario.email.trim().toLowerCase();
 
-    if (usuario.nome.trim().isEmpty ||
-        email.isEmpty ||
-        usuario.senha.isEmpty) {
+    if (nome.isEmpty || email.isEmpty || usuario.senha.isEmpty) {
       return false;
     }
 
-    final existente = await db.query(
-      'usuarios',
-      columns: ['id'],
-      where: 'email = ?',
-      whereArgs: [email],
-      limit: 1,
-    );
+    // Verifica se já existe um usuário com esse e-mail.
+    final existente = caixa.values.any((dados) {
+      return dados['email'] == email;
+    });
 
-    if (existente.isNotEmpty) {
+    if (existente) {
       return false;
     }
 
     final hash = await _gerarHash(usuario.senha);
 
-    try {
-      await db.insert(
-        'usuarios',
-        {
-          'nome': usuario.nome.trim(),
-          'email': email,
-          'senha': hash,
-        },
-        conflictAlgorithm: ConflictAlgorithm.abort,
-      );
+    // Gera um ID numérico para o novo usuário.
+    var novoId = 1;
 
-      return true;
-    } on DatabaseException {
-      return false;
+    for (final chave in caixa.keys) {
+      if (chave is int && chave >= novoId) {
+        novoId = chave + 1;
+      }
     }
+
+    await caixa.put(novoId, {
+      'id': novoId,
+      'nome': nome,
+      'email': email,
+      'senha': hash,
+    });
+
+    return true;
   }
 
   static Future<Usuario?> validarLogin(
     String email,
     String senha,
   ) async {
-    final db = await Conexao.abrirConexao();
+    final caixa = Conexao.usuarios;
+    final emailNormalizado = email.trim().toLowerCase();
 
-    final resultado = await db.query(
-      'usuarios',
-      where: 'email = ?',
-      whereArgs: [email.trim().toLowerCase()],
-      limit: 1,
-    );
+    for (final dados in caixa.values) {
+      if (dados['email'] == emailNormalizado) {
+        final senhaValida = await _verificarSenha(
+          senha,
+          dados['senha'] as String,
+        );
 
-    if (resultado.isEmpty) {
-      return null;
+        if (!senhaValida) {
+          return null;
+        }
+
+        return Usuario(
+          id: dados['id'] as int,
+          nome: dados['nome'] as String,
+          email: dados['email'] as String,
+          senha: '',
+        );
+      }
     }
 
-    final dados = resultado.first;
-    final senhaValida = await _verificarSenha(
-      senha,
-      dados['senha'] as String,
-    );
-
-    if (!senhaValida) {
-      return null;
-    }
-
-    return Usuario(
-      id: dados['id'] as int,
-      nome: dados['nome'] as String,
-      email: dados['email'] as String,
-      senha: '',
-    );
+    return null;
   }
 }

@@ -1,68 +1,21 @@
-
-import 'package:sqflite/sqflite.dart';
-import 'package:path/path.dart';
+import 'package:hive_ce_flutter/hive_flutter.dart';
 
 class Conexao {
-  static Future<Database> abrirConexao() async {
-    final caminhoBanco = await getDatabasesPath();
-    final caminhoCompleto = join(caminhoBanco, 'pessoas.db');
+  // Inicializa o Hive e abre as caixas do aplicativo.
+  static Future<void> inicializar() async {
+    await Hive.initFlutter();
 
-    return await openDatabase(
-      caminhoCompleto,
-      version: 2,
+    await Hive.openBox<Map>('usuarios');
+    await Hive.openBox<Map>('pessoas');
+  }
 
-      onCreate: (db, version) async {
-        await db.execute('''
-          CREATE TABLE usuarios (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            nome TEXT NOT NULL,
-            email TEXT NOT NULL UNIQUE,
-            senha TEXT NOT NULL
-          )
-        ''');
+  // Caixa que armazenará os usuários cadastrados.
+  static Box<Map> get usuarios {
+    return Hive.box<Map>('usuarios');
+  }
 
-        await db.execute('''
-          CREATE TABLE pessoas (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            nome TEXT NOT NULL,
-            idade INTEGER NOT NULL,
-            email TEXT NOT NULL,
-            telefone TEXT NOT NULL,
-            usuario_id INTEGER NOT NULL,
-            FOREIGN KEY (usuario_id)
-              REFERENCES usuarios (id)
-              ON DELETE CASCADE
-          )
-        ''');
-      },
-
-      onUpgrade: (db, versaoAntiga, versaoNova) async {
-        if (versaoAntiga < 2) {
-          await db.execute('''
-            CREATE TABLE IF NOT EXISTS usuarios (
-              id INTEGER PRIMARY KEY AUTOINCREMENT,
-              nome TEXT NOT NULL,
-              email TEXT NOT NULL UNIQUE,
-              senha TEXT NOT NULL
-            )
-          ''');
-
-          final colunas = await db.rawQuery(
-            'PRAGMA table_info(pessoas)',
-          );
-
-          final possuiUsuarioId = colunas.any(
-            (coluna) => coluna['name'] == 'usuario_id',
-          );
-
-          if (!possuiUsuarioId) {
-            await db.execute('''
-              ALTER TABLE pessoas
-              ADD COLUMN usuario_id INTEGER NOT NULL DEFAULT 0
-            ''');
-          }
-        }
-      },
-    );
+  // Caixa que armazenará os contatos.
+  static Box<Map> get pessoas {
+    return Hive.box<Map>('pessoas');
   }
 }

@@ -164,22 +164,86 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  void _abrirMeusContatos() {
+    Navigator.pop(context);
+  }
+
   @override
   Widget build(BuildContext context) {
+    const corPrincipal = Color(0xFF356859);
+
     return Scaffold(
       backgroundColor: const Color(0xFFF4F6F8),
+
+      // Menu lateral de navegação.
+      drawer: Drawer(
+        child: Column(
+          children: [
+            UserAccountsDrawerHeader(
+              decoration: const BoxDecoration(
+                color: corPrincipal,
+              ),
+              accountName: Text(
+                _nomeUsuario.isEmpty ? 'Usuário' : _nomeUsuario,
+              ),
+              accountEmail: const Text('Agenda de Contatos'),
+              currentAccountPicture: const CircleAvatar(
+                backgroundColor: Colors.white,
+                child: Icon(
+                  Icons.person,
+                  size: 38,
+                  color: corPrincipal,
+                ),
+              ),
+            ),
+
+            ListTile(
+              leading: const Icon(
+                Icons.contacts_outlined,
+                color: corPrincipal,
+              ),
+              title: const Text('Meus contatos'),
+              selected: true,
+              onTap: _abrirMeusContatos,
+            ),
+
+            const Divider(),
+
+            ListTile(
+              leading: const Icon(
+                Icons.logout,
+                color: Colors.red,
+              ),
+              title: const Text('Sair da conta'),
+              textColor: Colors.red,
+              onTap: () {
+                Navigator.pop(context);
+                _sair();
+              },
+            ),
+
+            const Spacer(),
+
+            const Padding(
+              padding: EdgeInsets.all(16),
+              child: Text(
+                'Agenda de Contatos',
+                style: TextStyle(
+                  color: Colors.black54,
+                  fontSize: 12,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+
       appBar: AppBar(
         title: const Text('Agenda de Contatos'),
-        backgroundColor: const Color(0xFF356859),
+        backgroundColor: corPrincipal,
         foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            tooltip: 'Sair',
-            onPressed: _sair,
-            icon: const Icon(Icons.logout),
-          ),
-        ],
       ),
+
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -204,6 +268,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
             ),
+
             Expanded(
               child: _carregando
                   ? const Center(
@@ -281,8 +346,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   child: ListTile(
                                     contentPadding: const EdgeInsets.all(12),
                                     leading: CircleAvatar(
-                                      backgroundColor:
-                                          const Color(0xFF356859),
+                                      backgroundColor: corPrincipal,
                                       foregroundColor: Colors.white,
                                       child: Text(
                                         pessoa.nome.isNotEmpty
@@ -323,9 +387,10 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
+
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _abrirFormulario(),
-        backgroundColor: const Color(0xFF356859),
+        backgroundColor: corPrincipal,
         foregroundColor: Colors.white,
         icon: const Icon(Icons.person_add),
         label: const Text('Novo contato'),

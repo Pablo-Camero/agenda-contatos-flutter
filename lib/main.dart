@@ -1,9 +1,14 @@
 
 import 'package:flutter/material.dart';
 
+import 'database/conexao.dart';
 import 'screens/login_screen.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Conexao.inicializar();
+
   runApp(const MeuAplicativo());
 }
 
