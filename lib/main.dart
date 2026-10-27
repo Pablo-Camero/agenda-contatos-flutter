@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import 'database/conexao.dart';
 import 'screens/login_screen.dart';
+import 'theme/app_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,12 +21,7 @@ class MeuAplicativo extends StatelessWidget {
     return MaterialApp(
       title: 'Agenda de Contatos',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF356859),
-        ),
-        useMaterial3: true,
-      ),
+      theme: AppTheme.tema,
       home: const LoginScreen(),
     );
   }
